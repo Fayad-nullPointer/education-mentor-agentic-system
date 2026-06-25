@@ -1,0 +1,23 @@
+# Tool 2 — Exam Generator dependencies
+# Install with: pip install -r requirements.txt
+
+# Environment variable loading
+python-dotenv>=1.0.0
+
+# LangChain / LangGraph / LangSmith
+langchain-core>=0.3.0
+langgraph>=0.2.0
+langsmith>=0.1.0
+
+# LLM gateway (OpenAI, Gemini, etc. — swappable via LLM_MODEL_NAME env var)
+litellm>=1.40.0
+
+# Vector DB
+qdrant-client>=1.9.0
+
+# Data validation
+pydantic>=2.0.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0

@@ -220,6 +220,10 @@ def _router(state: EduMentorState) -> str:
     return "idle_chat"
 
 
+def _after_generate(state: EduMentorState) -> str:
+    return "ask_question" if state.get("active_exam") else END
+
+
 def _after_record(state: EduMentorState) -> str:
     idx = state.get("current_q_idx", 0)
     total = len(state.get("active_exam", {}).get("questions", []))
@@ -236,11 +240,16 @@ def generate_exam_node(state: EduMentorState) -> dict:
         client, collection_name = _get_exam_client()
         chunks = _retrieve_chunks(topic, n_questions * 2, client, collection_name)
         if not chunks:
-            return {"messages": [AIMessage(content="⚠️ Could not find content in the exam corpus. Please try again.")]}
-        from app.core.schemas import MCQQuestion
+            return {
+                "exam_phase": "idle",
+                "messages": [AIMessage(content="⚠️ Could not find content in the exam corpus. Please try again.")],
+            }
         questions = _generate_mcqs(chunks, n_questions, topic)
     except Exception as e:
-        return {"messages": [AIMessage(content=f"⚠️ Failed to generate exam: {e}")]}
+        return {
+            "exam_phase": "idle",
+            "messages": [AIMessage(content=f"⚠️ Failed to generate exam: {e}")],
+        }
 
     state_questions = [_mcq_to_state_question(q) for q in questions]
     topic_str = f" on **{topic}**" if topic else ""
@@ -352,7 +361,7 @@ def _build_graph():
         "do_continue": "do_continue",
     })
 
-    g.add_edge("generate_exam", "ask_question")
+    g.add_conditional_edges("generate_exam", _after_generate, {"ask_question": "ask_question", END: END})
     g.add_edge("ask_question", END)
     g.add_conditional_edges("record_answer", _after_record, {
         "ask_question": "ask_question",
